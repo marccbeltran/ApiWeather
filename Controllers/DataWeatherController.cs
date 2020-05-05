@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using ApiWeather.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using ApiWeather.Models;
 
 namespace ApiWeather.Controllers
 {
@@ -12,37 +13,97 @@ namespace ApiWeather.Controllers
     [ApiController]
     public class DataWeatherController : ControllerBase
     {
+        private readonly WeatherContext _context;
+
+        public DataWeatherController(WeatherContext context)
+        {
+            _context = context;
+        }
+
         // GET: api/DataWeather
         [HttpGet]
-        public IEnumerable<DataWeather> Get()
+        public async Task<ActionResult<IEnumerable<DataWeather>>> GetDataWeathers()
         {
-            DataWeather data = new DataWeather();
-            yield return data;
+            return await _context.DataWeathers.ToListAsync();
         }
 
         // GET: api/DataWeather/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        [HttpGet("{id}")]
+        public async Task<ActionResult<DataWeather>> GetDataWeather(long id)
         {
-            return "value";
-        }
+            var dataWeather = await _context.DataWeathers.FindAsync(id);
 
-        // POST: api/DataWeather
-        [HttpPost]
-        public void Post([FromBody] string value)
-        {
+            if (dataWeather == null)
+            {
+                return NotFound();
+            }
+
+            return dataWeather;
         }
 
         // PUT: api/DataWeather/5
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
         [HttpPut("{id}")]
-        public void Put(int id, [FromBody] string value)
+        public async Task<IActionResult> PutDataWeather(long id, DataWeather dataWeather)
         {
+            if (id != dataWeather.Id)
+            {
+                return BadRequest();
+            }
+
+            _context.Entry(dataWeather).State = EntityState.Modified;
+
+            try
+            {
+                await _context.SaveChangesAsync();
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                if (!DataWeatherExists(id))
+                {
+                    return NotFound();
+                }
+                else
+                {
+                    throw;
+                }
+            }
+
+            return NoContent();
         }
 
-        // DELETE: api/ApiWithActions/5
-        [HttpDelete("{id}")]
-        public void Delete(int id)
+        // POST: api/DataWeather
+        // To protect from overposting attacks, enable the specific properties you want to bind to, for
+        // more details, see https://go.microsoft.com/fwlink/?linkid=2123754.
+        [HttpPost]
+        public async Task<ActionResult<DataWeather>> PostDataWeather(DataWeather dataWeather)
         {
+            _context.DataWeathers.Add(dataWeather);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction("GetDataWeather", new { id = dataWeather.Id }, dataWeather);
+        }
+
+        // DELETE: api/DataWeather/5
+        [HttpDelete("{id}")]
+        public async Task<ActionResult<DataWeather>> DeleteDataWeather(long id)
+        {
+            var dataWeather = await _context.DataWeathers.FindAsync(id);
+            if (dataWeather == null)
+            {
+                return NotFound();
+            }
+
+            _context.DataWeathers.Remove(dataWeather);
+            await _context.SaveChangesAsync();
+
+            return dataWeather;
+        }
+
+        private bool DataWeatherExists(long id)
+        {
+            return _context.DataWeathers.Any(e => e.Id == id);
         }
     }
 }
