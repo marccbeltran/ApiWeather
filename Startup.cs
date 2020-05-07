@@ -21,8 +21,8 @@ namespace ApiWeather
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
-            services.AddDbContext<WeatherContext>(opt =>
-               opt.UseInMemoryDatabase("Weather"));
+            services.AddDbContext<WeatherContext>(options =>
+            options.UseSqlServer(Configuration.GetConnectionString("WeatherContext")));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
